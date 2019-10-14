@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+
+  
+  <title>大数据实操:MapReduce实现计算每个月温度最高的两天 | Sherfin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="MapReduceClient：public class Main { public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {      Configuration configuration = new Configuration(true)">
+<meta name="keywords" content="IT、JAVA、大数据">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大数据实操:MapReduce实现计算每个月温度最高的两天">
+<meta property="og:url" content="http://39.100.246.166/2019/10/14/大数据实操-MapReduce实现计算每个月温度最高的两天/index.html">
+<meta property="og:site_name" content="Sherfin">
+<meta property="og:description" content="MapReduceClient：public class Main { public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {      Configuration configuration = new Configuration(true)">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-10-14T15:52:35.466Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="大数据实操:MapReduce实现计算每个月温度最高的两天">
+<meta name="twitter:description" content="MapReduceClient：public class Main { public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {      Configuration configuration = new Configuration(true)">
+  
+    <link rel="alternate" href="/atom.xml" title="Sherfin" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Sherfin</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">有时候我会反思自己是个什么样的人，反思后，我得出的结论是我是一个自私的人，一个彻底的利己主义者，我不喜欢和别人分享我所学的东西，但是又想让别人知道我在干些什么，我为什么要搭建这个博客，不是我喜欢分享，而是为了让别人知道而分享。</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">主页</a>
+        
+          <a class="main-nav-link" href="/archives">文档</a>
+        
+          <a class="main-nav-link" href="/resource">资源</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://39.100.246.166"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-大数据实操-MapReduce实现计算每个月温度最高的两天" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/10/14/大数据实操-MapReduce实现计算每个月温度最高的两天/" class="article-date">
+  <time datetime="2019-10-14T15:47:43.000Z" itemprop="datePublished">2019-10-14</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      大数据实操:MapReduce实现计算每个月温度最高的两天
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>MapReduceClient：<br>public class Main {</p>
+<pre><code>public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
+
+    Configuration configuration = new Configuration(true);
+
+    Job job = Job.getInstance(configuration);
+
+    job.setJarByClass(Main.class);
+
+    job.setJobName(&quot;calWenDu&quot;);
+
+    job.setMapperClass(MyMapper1.class);
+    job.setInputFormatClass(TextInputFormat.class);
+    job.setMapOutputKeyClass(Weather.class);
+    job.setMapOutputValueClass(IntWritable.class);
+
+    job.setPartitionerClass(MyPartitioner.class);
+    job.setSortComparatorClass(MySort.class);
+
+    job.setGroupingComparatorClass(MyGroup.class);
+    job.setReducerClass(MyReducer1.class);
+
+    job.setNumReduceTasks(2);
+
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
+
+    Path input = new Path(&quot;/user/root/tem.txt&quot;);
+    FileInputFormat.addInputPath(job,input);
+
+    Path output = new Path(&quot;/user/root/tem_out.txt&quot;);
+    FileOutputFormat.setOutputPath(job,output);
+    if (output.getFileSystem(configuration).exists(output)){
+        output.getFileSystem(configuration).delete(output,true);
+    }
+    job.waitForCompletion(true);
+}</code></pre><p>}</p>
+<p>Key类:<br>/**</p>
+<ul>
+<li><p>@author: xxf</p>
+</li>
+<li><p>description:</p>
+</li>
+<li><p>date: Create in 11:40 2019/10/14</p>
+</li>
+<li><p>modified By:</p>
+</li>
+<li><p>/<br>public class Weather implements WritableComparable<weather> {</weather></p>
+<p>  private int year;</p>
+<p>  private int month;</p>
+<p>  private int day;</p>
+<p>  private int temerapure;</p>
+<p>  public int getYear() {</p>
+<pre><code>return year;</code></pre><p>  }</p>
+<p>  public void setYear(int year) {</p>
+<pre><code>this.year = year;</code></pre><p>  }</p>
+<p>  public int getMonth() {</p>
+<pre><code>return month;</code></pre><p>  }</p>
+<p>  public void setMonth(int month) {</p>
+<pre><code>this.month = month;</code></pre><p>  }</p>
+<p>  public int getDay() {</p>
+<pre><code>return day;</code></pre><p>  }</p>
+<p>  public void setDay(int day) {</p>
+<pre><code>this.day = day;</code></pre><p>  }</p>
+<p>  public int getTemerapure() {</p>
+<pre><code>return temerapure;</code></pre><p>  }</p>
+<p>  public void setTemerapure(int temerapure) {</p>
+<pre><code>this.temerapure = temerapure;</code></pre><p>  }</p>
+</li>
+</ul>
+<pre><code>@Override
+public int compareTo(Weather o) {
+    int r = Integer.compare(this.year,o.getYear());
+    if (r==0){
+        int r1=Integer.compare(this.month,o.getMonth());
+        if (r1==0){
+            return Integer.compare(this.day,o.getDay());
+        }
+        return r1;
+    }
+    return r;
+}
+
+@Override
+public void write(DataOutput out) throws IOException {
+    out.writeInt(this.year);
+    out.writeInt(this.month);
+    out.writeInt(this.day);
+    out.writeInt(this.temerapure);
+}
+
+@Override
+public void readFields(DataInput in) throws IOException {
+    this.year=in.readInt();
+    this.month=in.readInt();
+    this.day=in.readInt();
+    this.temerapure=in.readInt();
+}</code></pre><p>}</p>
+<p>自定义Mapper：<br>public class MyMapper1 extends Mapper&lt;LongWritable, Text,Weather, IntWritable&gt; {</p>
+<pre><code>Weather weather = new Weather();
+
+IntWritable intWritable = new IntWritable();
+
+@Override
+protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+    String[] strs = value.toString().split(&quot;    &quot;);
+
+    SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-mm-dd&quot;);
+
+    try {
+        Date date =  sdf.parse(strs[0]);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        weather.setYear(calendar.get(Calendar.YEAR));
+        weather.setMonth(calendar.get(Calendar.MONTH+1));
+        weather.setDay(calendar.get(Calendar.DAY_OF_MONTH));
+
+        int webdu=Integer.parseInt(strs[1]);
+        weather.setTemerapure(webdu);
+
+        intWritable.set(webdu);
+        context.write(weather,intWritable);
+    } catch (ParseException e) {
+        e.printStackTrace();
+    }
+
+}</code></pre><p>}</p>
+<p>自定义分区:<br>public class MyMapper1 extends Mapper&lt;LongWritable, Text,Weather, IntWritable&gt; {</p>
+<pre><code>Weather weather = new Weather();
+
+IntWritable intWritable = new IntWritable();
+
+@Override
+protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+    String[] strs = value.toString().split(&quot;    &quot;);
+
+    SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-mm-dd&quot;);
+
+    try {
+        Date date =  sdf.parse(strs[0]);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        weather.setYear(calendar.get(Calendar.YEAR));
+        weather.setMonth(calendar.get(Calendar.MONTH+1));
+        weather.setDay(calendar.get(Calendar.DAY_OF_MONTH));
+
+        int webdu=Integer.parseInt(strs[1]);
+        weather.setTemerapure(webdu);
+
+        intWritable.set(webdu);
+        context.write(weather,intWritable);
+    } catch (ParseException e) {
+        e.printStackTrace();
+    }
+
+}</code></pre><p>}</p>
+<p>自定义排序比较器:<br>public class MySort extends WritableComparator {</p>
+<pre><code>public MySort(){
+    super(Weather.class,true);
+}
+
+@Override
+public int compare(WritableComparable a, WritableComparable b) {
+    Weather weather1 = (Weather)a;
+    Weather weather2 = (Weather)b;
+
+    int r1=Integer.compare(weather1.getYear(),weather2.getYear());
+    if (r1==0){
+        int r2=Integer.compare(weather1.getMonth(),weather2.getMonth());
+            if (r2==0){
+                return -Integer.compare(weather1.getTemerapure(),weather2.getTemerapure());
+            }
+            return r2;
+    }
+    return r1;
+}</code></pre><p>}</p>
+<p>自定义分组比较器:<br>public class MyGroup extends WritableComparator {</p>
+<pre><code>public MyGroup(){
+    super(Weather.class,true);
+}
+
+@Override
+public int compare(WritableComparable a, WritableComparable b) {
+    Weather weather1 = (Weather)a;
+    Weather weather2 = (Weather)b;
+
+    int r1=Integer.compare(weather1.getYear(),weather2.getYear());
+    if (r1==0){
+        return Integer.compare(weather1.getMonth(),weather2.getMonth());
+    }
+    return r1;
+}</code></pre><p>}</p>
+<p>自定义Reducer：<br>public class MyReducer1 extends Reducer &lt;Weather, IntWritable, Text,IntWritable&gt;{</p>
+<pre><code>Text rkey = new Text();
+
+IntWritable intWritable = new IntWritable();
+
+@Override
+protected void reduce(Weather key, Iterable&lt;IntWritable&gt; values, Context context) throws IOException, InterruptedException {
+
+            int flag=0;
+            int day=0;
+            for (IntWritable writable : values){
+                if (flag==0){
+                    rkey.set(key.getYear()+&quot;-&quot;+key.getMonth()+&quot;-&quot;+key.getDay()+&quot;:&quot;+key.getTemerapure());
+                    intWritable.set(key.getTemerapure());
+                    flag++;
+                    day=key.getDay();
+                    context.write(rkey,intWritable);
+                }
+                if (flag!=0 &amp;&amp; day!=key.getDay()){
+                    rkey.set(key.getYear()+&quot;-&quot;+key.getMonth()+&quot;-&quot;+key.getDay()+&quot;:&quot;+key.getTemerapure());
+                    intWritable.set(key.getTemerapure());
+                    context.write(rkey,intWritable);
+                    break;
+                }
+            }
+
+}</code></pre><p>}</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://39.100.246.166/2019/10/14/大数据实操-MapReduce实现计算每个月温度最高的两天/" data-id="ck1qmr48v00058wuh2rfp1y5x" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/10/14/大数据实操-利用Java代码操作HDFS/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          大数据实操:利用Java代码操作HDFS
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/10/13/大数据学习笔记-MapReduce/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">大数据学习笔记:MapReduce</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">文章</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">October 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最近发表</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/10/14/大数据实操-利用Java代码操作HDFS/">大数据实操:利用Java代码操作HDFS</a>
+          </li>
+        
+          <li>
+            <a href="/2019/10/14/大数据实操-MapReduce实现计算每个月温度最高的两天/">大数据实操:MapReduce实现计算每个月温度最高的两天</a>
+          </li>
+        
+          <li>
+            <a href="/2019/10/13/大数据学习笔记-MapReduce/">大数据学习笔记:MapReduce</a>
+          </li>
+        
+          <li>
+            <a href="/2019/10/13/大数据学习笔记-HADOOP高可用搭建流程/">大数据学习笔记:HADOOP高可用搭建流程</a>
+          </li>
+        
+          <li>
+            <a href="/2019/10/13/如何利用hexo-github-nginx快速搭建个人博客/">如何利用hexo+github+nginx快速搭建个人博客</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 古英俊<br>
+      Powered by <a href="http://hexo.io/" target="_blank">古英俊</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">主页</a>
+  
+    <a href="/archives" class="mobile-nav-link">文档</a>
+  
+    <a href="/resource" class="mobile-nav-link">资源</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>

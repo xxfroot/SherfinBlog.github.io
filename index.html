@@ -42,7 +42,7 @@
       </h1>
       
         <h2 id="subtitle-wrap">
-          <a href="/" id="subtitle">记录学习的点滴</a>
+          <a href="/" id="subtitle">有时候我会反思自己是个什么样的人，反思后，我得出的结论是我是一个自私的人，一个彻底的利己主义者，我不喜欢和别人分享我所学的东西，但是又想让别人知道我在干些什么，我为什么要搭建这个博客，不是我喜欢分享，而是为了让别人知道而分享。</a>
         </h2>
       
     </div>
@@ -72,6 +72,299 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-大数据实操-利用Java代码操作HDFS" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/10/14/大数据实操-利用Java代码操作HDFS/" class="article-date">
+  <time datetime="2019-10-14T15:54:47.000Z" itemprop="datePublished">2019-10-14</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/10/14/大数据实操-利用Java代码操作HDFS/">大数据实操:利用Java代码操作HDFS</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>上传本地文件到HDFS:<br>public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {<br>        Configuration configuration = new Configuration();<br>        FileSystem fileSystem = FileSystem.get(new URI(“namenode节点”),configuration,”root”);<br>        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(<br>                new FileInputStream(new File(“D:\数据\tem.txt”)),”gbk”));<br>        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileSystem.create(new Path(“/user/root/tem.txt”)));<br>        IOUtils.copy(bufferedReader,outputStreamWriter);<br>        bufferedReader.close();<br>        outputStreamWriter.close();<br>        System.out.println(“上传成功”);<br>         }</p>
+<p>读取HDFS文件:<br>public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {<br>        Configuration configuration = new Configuration();<br>        FileSystem fileSystem = FileSystem.get(new URI(“namenode节点”),configuration,”root”);<br>        FSDataInputStream inputStream = fileSystem.open(new Path(“/user/root/sou_gou_r1”));<br>        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream,”utf-8”));<br>        String line=null;<br>        while ((line=bufferedReader.readLine())!=null){<br>            System.out.println(line);<br>        }<br>        inputStream.close();<br>        bufferedReader.close();<br>    }</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://39.100.246.166/2019/10/14/大数据实操-利用Java代码操作HDFS/" data-id="ck1qmr48u00048wuhctjt66bx" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-大数据实操-MapReduce实现计算每个月温度最高的两天" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/10/14/大数据实操-MapReduce实现计算每个月温度最高的两天/" class="article-date">
+  <time datetime="2019-10-14T15:47:43.000Z" itemprop="datePublished">2019-10-14</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/10/14/大数据实操-MapReduce实现计算每个月温度最高的两天/">大数据实操:MapReduce实现计算每个月温度最高的两天</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>MapReduceClient：<br>public class Main {</p>
+<pre><code>public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
+
+    Configuration configuration = new Configuration(true);
+
+    Job job = Job.getInstance(configuration);
+
+    job.setJarByClass(Main.class);
+
+    job.setJobName(&quot;calWenDu&quot;);
+
+    job.setMapperClass(MyMapper1.class);
+    job.setInputFormatClass(TextInputFormat.class);
+    job.setMapOutputKeyClass(Weather.class);
+    job.setMapOutputValueClass(IntWritable.class);
+
+    job.setPartitionerClass(MyPartitioner.class);
+    job.setSortComparatorClass(MySort.class);
+
+    job.setGroupingComparatorClass(MyGroup.class);
+    job.setReducerClass(MyReducer1.class);
+
+    job.setNumReduceTasks(2);
+
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
+
+    Path input = new Path(&quot;/user/root/tem.txt&quot;);
+    FileInputFormat.addInputPath(job,input);
+
+    Path output = new Path(&quot;/user/root/tem_out.txt&quot;);
+    FileOutputFormat.setOutputPath(job,output);
+    if (output.getFileSystem(configuration).exists(output)){
+        output.getFileSystem(configuration).delete(output,true);
+    }
+    job.waitForCompletion(true);
+}</code></pre><p>}</p>
+<p>Key类:<br>/**</p>
+<ul>
+<li><p>@author: xxf</p>
+</li>
+<li><p>description:</p>
+</li>
+<li><p>date: Create in 11:40 2019/10/14</p>
+</li>
+<li><p>modified By:</p>
+</li>
+<li><p>/<br>public class Weather implements WritableComparable<weather> {</weather></p>
+<p>  private int year;</p>
+<p>  private int month;</p>
+<p>  private int day;</p>
+<p>  private int temerapure;</p>
+<p>  public int getYear() {</p>
+<pre><code>return year;</code></pre><p>  }</p>
+<p>  public void setYear(int year) {</p>
+<pre><code>this.year = year;</code></pre><p>  }</p>
+<p>  public int getMonth() {</p>
+<pre><code>return month;</code></pre><p>  }</p>
+<p>  public void setMonth(int month) {</p>
+<pre><code>this.month = month;</code></pre><p>  }</p>
+<p>  public int getDay() {</p>
+<pre><code>return day;</code></pre><p>  }</p>
+<p>  public void setDay(int day) {</p>
+<pre><code>this.day = day;</code></pre><p>  }</p>
+<p>  public int getTemerapure() {</p>
+<pre><code>return temerapure;</code></pre><p>  }</p>
+<p>  public void setTemerapure(int temerapure) {</p>
+<pre><code>this.temerapure = temerapure;</code></pre><p>  }</p>
+</li>
+</ul>
+<pre><code>@Override
+public int compareTo(Weather o) {
+    int r = Integer.compare(this.year,o.getYear());
+    if (r==0){
+        int r1=Integer.compare(this.month,o.getMonth());
+        if (r1==0){
+            return Integer.compare(this.day,o.getDay());
+        }
+        return r1;
+    }
+    return r;
+}
+
+@Override
+public void write(DataOutput out) throws IOException {
+    out.writeInt(this.year);
+    out.writeInt(this.month);
+    out.writeInt(this.day);
+    out.writeInt(this.temerapure);
+}
+
+@Override
+public void readFields(DataInput in) throws IOException {
+    this.year=in.readInt();
+    this.month=in.readInt();
+    this.day=in.readInt();
+    this.temerapure=in.readInt();
+}</code></pre><p>}</p>
+<p>自定义Mapper：<br>public class MyMapper1 extends Mapper&lt;LongWritable, Text,Weather, IntWritable&gt; {</p>
+<pre><code>Weather weather = new Weather();
+
+IntWritable intWritable = new IntWritable();
+
+@Override
+protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+    String[] strs = value.toString().split(&quot;    &quot;);
+
+    SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-mm-dd&quot;);
+
+    try {
+        Date date =  sdf.parse(strs[0]);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        weather.setYear(calendar.get(Calendar.YEAR));
+        weather.setMonth(calendar.get(Calendar.MONTH+1));
+        weather.setDay(calendar.get(Calendar.DAY_OF_MONTH));
+
+        int webdu=Integer.parseInt(strs[1]);
+        weather.setTemerapure(webdu);
+
+        intWritable.set(webdu);
+        context.write(weather,intWritable);
+    } catch (ParseException e) {
+        e.printStackTrace();
+    }
+
+}</code></pre><p>}</p>
+<p>自定义分区:<br>public class MyMapper1 extends Mapper&lt;LongWritable, Text,Weather, IntWritable&gt; {</p>
+<pre><code>Weather weather = new Weather();
+
+IntWritable intWritable = new IntWritable();
+
+@Override
+protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+    String[] strs = value.toString().split(&quot;    &quot;);
+
+    SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-mm-dd&quot;);
+
+    try {
+        Date date =  sdf.parse(strs[0]);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        weather.setYear(calendar.get(Calendar.YEAR));
+        weather.setMonth(calendar.get(Calendar.MONTH+1));
+        weather.setDay(calendar.get(Calendar.DAY_OF_MONTH));
+
+        int webdu=Integer.parseInt(strs[1]);
+        weather.setTemerapure(webdu);
+
+        intWritable.set(webdu);
+        context.write(weather,intWritable);
+    } catch (ParseException e) {
+        e.printStackTrace();
+    }
+
+}</code></pre><p>}</p>
+<p>自定义排序比较器:<br>public class MySort extends WritableComparator {</p>
+<pre><code>public MySort(){
+    super(Weather.class,true);
+}
+
+@Override
+public int compare(WritableComparable a, WritableComparable b) {
+    Weather weather1 = (Weather)a;
+    Weather weather2 = (Weather)b;
+
+    int r1=Integer.compare(weather1.getYear(),weather2.getYear());
+    if (r1==0){
+        int r2=Integer.compare(weather1.getMonth(),weather2.getMonth());
+            if (r2==0){
+                return -Integer.compare(weather1.getTemerapure(),weather2.getTemerapure());
+            }
+            return r2;
+    }
+    return r1;
+}</code></pre><p>}</p>
+<p>自定义分组比较器:<br>public class MyGroup extends WritableComparator {</p>
+<pre><code>public MyGroup(){
+    super(Weather.class,true);
+}
+
+@Override
+public int compare(WritableComparable a, WritableComparable b) {
+    Weather weather1 = (Weather)a;
+    Weather weather2 = (Weather)b;
+
+    int r1=Integer.compare(weather1.getYear(),weather2.getYear());
+    if (r1==0){
+        return Integer.compare(weather1.getMonth(),weather2.getMonth());
+    }
+    return r1;
+}</code></pre><p>}</p>
+<p>自定义Reducer：<br>public class MyReducer1 extends Reducer &lt;Weather, IntWritable, Text,IntWritable&gt;{</p>
+<pre><code>Text rkey = new Text();
+
+IntWritable intWritable = new IntWritable();
+
+@Override
+protected void reduce(Weather key, Iterable&lt;IntWritable&gt; values, Context context) throws IOException, InterruptedException {
+
+            int flag=0;
+            int day=0;
+            for (IntWritable writable : values){
+                if (flag==0){
+                    rkey.set(key.getYear()+&quot;-&quot;+key.getMonth()+&quot;-&quot;+key.getDay()+&quot;:&quot;+key.getTemerapure());
+                    intWritable.set(key.getTemerapure());
+                    flag++;
+                    day=key.getDay();
+                    context.write(rkey,intWritable);
+                }
+                if (flag!=0 &amp;&amp; day!=key.getDay()){
+                    rkey.set(key.getYear()+&quot;-&quot;+key.getMonth()+&quot;-&quot;+key.getDay()+&quot;:&quot;+key.getTemerapure());
+                    intWritable.set(key.getTemerapure());
+                    context.write(rkey,intWritable);
+                    break;
+                }
+            }
+
+}</code></pre><p>}</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://39.100.246.166/2019/10/14/大数据实操-MapReduce实现计算每个月温度最高的两天/" data-id="ck1qmr48v00058wuh2rfp1y5x" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-大数据学习笔记-MapReduce" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2019/10/13/大数据学习笔记-MapReduce/" class="article-date">
@@ -98,7 +391,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://39.100.246.166/2019/10/13/大数据学习笔记-MapReduce/" data-id="ck1p41sbl000188uhk9xmne6g" class="article-share-link">Share</a>
+      <a data-url="http://39.100.246.166/2019/10/13/大数据学习笔记-MapReduce/" data-id="ck1qmr48r00028wuhrjg5r9sy" class="article-share-link">Share</a>
       
       
     </footer>
@@ -134,7 +427,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://39.100.246.166/2019/10/13/大数据学习笔记-HADOOP高可用搭建流程/" data-id="ck1p41sbg000088uhr65hazi8" class="article-share-link">Share</a>
+      <a data-url="http://39.100.246.166/2019/10/13/大数据学习笔记-HADOOP高可用搭建流程/" data-id="ck1qmr48l00008wuh06j7zllr" class="article-share-link">Share</a>
       
       
     </footer>
@@ -170,7 +463,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://39.100.246.166/2019/10/13/如何利用hexo-github-nginx快速搭建个人博客/" data-id="ck1p41sbm000288uh165i7etq" class="article-share-link">Share</a>
+      <a data-url="http://39.100.246.166/2019/10/13/如何利用hexo-github-nginx快速搭建个人博客/" data-id="ck1qmr48x00068wuhhqkrx414" class="article-share-link">Share</a>
       
       
     </footer>
@@ -207,7 +500,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://39.100.246.166/2019/10/13/大数据学习笔记-什么是HADOOP/" data-id="ck1p41sbn000388uhayhdnaog" class="article-share-link">Share</a>
+      <a data-url="http://39.100.246.166/2019/10/13/大数据学习笔记-什么是HADOOP/" data-id="ck1qmr48t00038wuh109f26cx" class="article-share-link">Share</a>
       
       
     </footer>
@@ -248,6 +541,14 @@
       <ul>
         
           <li>
+            <a href="/2019/10/14/大数据实操-利用Java代码操作HDFS/">大数据实操:利用Java代码操作HDFS</a>
+          </li>
+        
+          <li>
+            <a href="/2019/10/14/大数据实操-MapReduce实现计算每个月温度最高的两天/">大数据实操:MapReduce实现计算每个月温度最高的两天</a>
+          </li>
+        
+          <li>
             <a href="/2019/10/13/大数据学习笔记-MapReduce/">大数据学习笔记:MapReduce</a>
           </li>
         
@@ -257,10 +558,6 @@
         
           <li>
             <a href="/2019/10/13/如何利用hexo-github-nginx快速搭建个人博客/">如何利用hexo+github+nginx快速搭建个人博客</a>
-          </li>
-        
-          <li>
-            <a href="/2019/10/13/大数据学习笔记-什么是HADOOP/">大数据学习笔记:什么是HADOOP</a>
           </li>
         
       </ul>
